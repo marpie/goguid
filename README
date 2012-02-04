@@ -1,0 +1,27 @@
+Package goguid is a GUID generation library based on noeqd / snowflake.
+All credit belongs to them!
+
+GUID generation and guarantees (GUID size = 64 bit unsigned)
+
+- time            - 42 bit - millisecond precision (~ 100 years)
+- machine id      - 10 bit - max. 1024 machines
+- sequence number - 12 bit - rolls over after 4096 id's in one millisecond
+
+Usage
+
+  req_chan := make(chan chan int64)
+  quit := make(chan bool, 1)
+  
+  // Initialize the "server"
+  go ServGuid(0, 0, req_chan, quit)
+  
+  for i := 0; i < 10; i++ {
+    id := GetGUID(req_chan)
+    if id != 0 {
+      print(id)
+    }
+  }
+  
+  // Shut down the "server"
+  quit <- true
+
