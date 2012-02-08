@@ -11,26 +11,25 @@
 //  - machine id      - 10 bit - max. 1024 machines
 //  - sequence number - 12 bit - rolls over after 4096 id's in one millisecond
 //
+// Performance
+//   On a DELL Latitude (i5 2.4GHz) notebook it generates approx. 4 million GUID per second.
+//
 // Usage
-//   req_chan := make(chan chan int64)
-//   quit := make(chan bool, 1)
+//   // Initialize the package
+//   InitGUID(0, 0)
 //   
-//   // Initialize the "server"
-//   go ServGuid(0, 0, req_chan, quit)
-//   
+//   // Generate IDs...
 //   for i := 0; i < 10; i++ {
-//       id := GetGUID(req_chan)
+//       id := GetGUID()
 //       if id != 0 {
 //         print(id)
 //       }
 //   }
 //   
-//   // Shut down the "server"
-//   quit <- true
-//
 package guid
 
 import (
+	"sync"
 	"time"
 )
 
@@ -50,39 +49,25 @@ var (
 	lastTimestamp  int64
 	machineId      int64
 	sequenceNumber int64
+	mutex          sync.Mutex
 )
-
-// ServGuid should be used as a goroutine to serve the GUID.
-func ServGuid(machineIdentifier, lastUsedTimestamp int, req <-chan chan int64, quit <-chan bool) {
-	machineId = int64(machineIdentifier << machineIdShift)
-	lastTimestamp = int64(lastUsedTimestamp)
-
-	for {
-		select {
-		case receiver := <-req:
-			receiver <- getNextGuid()
-		case <-quit:
-			return
-		}
-	}
-	return
-}
-
-// GetGUID returns the next GUID.
-// It requests a GUID over the chan that was initialized during ServGuid. 
-func GetGUID(requestChannel chan<- chan int64) int64 {
-	response := make(chan int64)
-	requestChannel <- response
-
-	return <-response
-}
 
 func customTimeInMilliseconds() int64 {
 	return (time.Now().UnixNano() / 1e6)
 }
 
-func getNextGuid() int64 {
+// InitGUID must be called to initialize the GUID engine.
+func InitGUID(machineIdentifier int64, lastUsedTimestamp int64) {
+	machineId = int64(machineIdentifier << machineIdShift)
+	lastTimestamp = int64(lastUsedTimestamp)
+}
+
+// GetGUID generates the next GUID.
+// The function uses a mutex to ensure unique values.
+func GetGUID() int64 {
 	timestamp := customTimeInMilliseconds()
+	mutex.Lock()
+	defer mutex.Unlock()
 	if lastTimestamp == timestamp {
 		sequenceNumber = (sequenceNumber + 1) & sequenceMask
 		if sequenceNumber == 0 {

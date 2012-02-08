@@ -7,21 +7,17 @@ GUID generation and guarantees (GUID size = 64 bit unsigned)
 - machine id      - 10 bit - max. 1024 machines
 - sequence number - 12 bit - rolls over after 4096 id's in one millisecond
 
+Performance
+  On a DELL Latitude (i5 2.4GHz) notebook it generates approx. 4 million GUID per second.
+
 Usage
 
-  req_chan := make(chan chan int64)
-  quit := make(chan bool, 1)
-  
-  // Initialize the "server"
-  go ServGuid(0, 0, req_chan, quit)
-  
-  for i := 0; i < 10; i++ {
-    id := GetGUID(req_chan)
-    if id != 0 {
-      print(id)
+  // Initialize the package
+  guid.InitGUID(0, 0)
+
+  for i := int64(0); i < max_guids; i++ {
+    if guid.GetGUID() != 0 {
+      counter++
     }
   }
-  
-  // Shut down the "server"
-  quit <- true
 
