@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	guid "goguid"
+	guid "github.com/marpie/goguid"
 	"time"
 )
 
