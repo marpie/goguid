@@ -1,4 +1,4 @@
-// Copyright 2012 Markus Piéton. All rights reserved.
+// Copyright 2014 Markus Piéton. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -17,7 +17,7 @@
 // Usage
 //   // Initialize the package
 //   InitGUID(0, 0)
-//   
+//
 //   // Generate IDs...
 //   for i := 0; i < 10; i++ {
 //       id := GetGUID()
@@ -25,7 +25,7 @@
 //         print(id)
 //       }
 //   }
-//   
+//
 package guid
 
 import (
@@ -88,4 +88,11 @@ func GetGUID() int64 {
 	id := (timestamp << timestampShift) | machineId | sequenceNumber
 
 	return id
+}
+
+// GetLastTimestamp returns the last timestamp used by GetGUID.
+func GetLastTimestamp() int64 {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return lastTimestamp
 }
